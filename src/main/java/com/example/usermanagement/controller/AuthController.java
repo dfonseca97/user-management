@@ -12,6 +12,7 @@ import com.example.usermanagement.payload.LoginRequest;
 import com.example.usermanagement.payload.SignUpRequest;
 import com.example.usermanagement.repository.RoleRepository;
 import com.example.usermanagement.repository.UserRepository;
+import com.example.usermanagement.security.CustomUserDetailsService;
 import com.example.usermanagement.security.JwtTokenProvider;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,13 +47,15 @@ public class AuthController {
 
     private final JwtTokenProvider tokenProvider;
 
+    private final CustomUserDetailsService customUserDetailsService;
+
     @PostMapping("/signin")
-    public ResponseEntity<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest request) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getFullName(),
-                        loginRequest.getPassword()
+                        request.getFullName(),
+                        request.getPassword()
                 )
         );
 
@@ -61,26 +66,26 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<JwtAuthenticationResponse> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
-        if(userRepository.existsByFullName(signUpRequest.getFullName())) {
+    public ResponseEntity<JwtAuthenticationResponse> registerUser(@Valid @RequestBody SignUpRequest request) {
+        if(userRepository.existsByFullName(request.getFullName())) {
             return new ResponseEntity(new ApiResponse(false, "Username is already taken!"),
                     HttpStatus.BAD_REQUEST);
         }
 
-        if(userRepository.existsByEmail(signUpRequest.getEmail())) {
+        if(userRepository.existsByEmail(request.getEmail())) {
             return new ResponseEntity(new ApiResponse(false, "Email Address already in use!"),
                     HttpStatus.BAD_REQUEST);
         }
 
         // Creating user's account
         User user = User.builder()
-                .address(signUpRequest.getAddress())
-                .email(signUpRequest.getEmail())
-                .fullBusinessTitle(signUpRequest.getFullBusinessTitle())
-                .fullName(signUpRequest.getFullName())
-                .password(passwordEncoder.encode(signUpRequest.getPassword()))
-                .phone(signUpRequest.getPhone())
-                .workingAddress(signUpRequest.getWorkingAddress())
+                .address(request.getAddress())
+                .email(request.getEmail())
+                .fullBusinessTitle(request.getFullBusinessTitle())
+                .fullName(request.getFullName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .workingAddress(request.getWorkingAddress())
                 .build();
 
 
@@ -91,16 +96,8 @@ public class AuthController {
 
         User savedUser = userRepository.save(user);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        savedUser.getFullName(),
-                        savedUser.getPassword()
-                )
-        );
+        String jwt = tokenProvider.generateTokenByUser(savedUser);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String jwt = tokenProvider.generateToken(authentication);
 
         return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));    }
 }
