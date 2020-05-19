@@ -6,11 +6,9 @@ import com.example.usermanagement.model.User;
 
 import java.util.Optional;
 
-@Repository
 public interface UserRepository extends JpaRepository<User,Long>{
-    long countByBaskets(Long userId);
 
-    Optional<User> findByUsername(String username);
-    boolean existsByUsername(String username);
+    Optional<User> findByFullName(String fullName);
+    boolean existsByFullName(String fullName);
     boolean existsByEmail(String email);
 }

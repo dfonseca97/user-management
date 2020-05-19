@@ -1,25 +1,37 @@
 package com.example.usermanagement.payload;
 
 import lombok.Data;
+import org.hibernate.annotations.NaturalId;
 
 import javax.validation.constraints.*;
 @Data
 public class SignUpRequest {
-    @NotBlank
-    @Size(min = 4, max = 40)
-    private String name;
 
     @NotBlank
-    @Size(min = 3, max = 15)
-    private String username;
+    @Size(max=40)
+    private String fullName;
 
     @NotBlank
-    @Size(max = 40)
+    @Size(max=40)
+    private String fullBusinessTitle;
+
+    @NotBlank
+    @Size(max=40)
+    private String address;
+
+    @NaturalId
+    @NotBlank
+    @Size(max=50)
     @Email
     private String email;
 
     @NotBlank
-    @Size(min = 6, max = 20)
+    @Size(max=100)
     private String password;
+
+    private String phone;
+
+    private String workingAddress;
+
 }
 

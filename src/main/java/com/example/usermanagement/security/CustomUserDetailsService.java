@@ -2,6 +2,7 @@ package com.example.usermanagement.security;
 
 import com.example.usermanagement.model.User;
 import com.example.usermanagement.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,19 +11,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String username)
+    public UserDetails loadUserByUsername(String fullName)
             throws UsernameNotFoundException {
         // Let people login with either username or email
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByFullName(fullName)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with username or email : " + username)
+                        new UsernameNotFoundException("User not found with username or email : " + fullName)
                 );
 
         return UserPrincipal.create(user);

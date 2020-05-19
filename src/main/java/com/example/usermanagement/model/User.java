@@ -1,8 +1,10 @@
 package com.example.usermanagement.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NaturalId;
-import com.example.usermanagement.model.audit.DateAudit;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -28,13 +30,16 @@ import java.util.Set;
 @Entity
 @Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(columnNames = {
-                "username"
+                "fullname"
         }),
         @UniqueConstraint(columnNames = {
                 "email"
         })
 })
-public class User extends DateAudit {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -71,20 +76,4 @@ public class User extends DateAudit {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "user",
-    cascade = CascadeType.ALL,
-    fetch = FetchType.EAGER,
-    orphanRemoval = true)
-    private List<Basket> baskets = new ArrayList<>();
-
-    public User(){
-
-    }
-
-    public User(String name, String username, String email, String password){
-        this.name =  name;
-        this.username = username;
-        this.password =password;
-        this.email= email;
-    }
 }
