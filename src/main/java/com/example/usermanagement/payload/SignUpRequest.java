@@ -4,6 +4,7 @@ import lombok.Data;
 import org.hibernate.annotations.NaturalId;
 
 import javax.validation.constraints.*;
+
 @Data
 public class SignUpRequest {
 
