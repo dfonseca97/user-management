@@ -84,8 +84,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers("/api/auth/**")
                 .permitAll()
+                .antMatchers("/api/users/**")
+                .authenticated()
+                .antMatchers("/api/auth/disable")
+                .hasRole("ADMIN")
                 .antMatchers("/api/roles/**")
-                .hasRole("ADMIN");
+                .hasRole("ADMIN")
+                .antMatchers("/api/projects/**")
+                .authenticated();
 
         // Add our custom JWT security filter
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

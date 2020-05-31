@@ -71,6 +71,8 @@ public class User {
 
     private String workingAddress;
 
+    private Boolean active = true;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),

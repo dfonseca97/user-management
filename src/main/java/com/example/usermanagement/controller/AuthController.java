@@ -6,6 +6,7 @@ import com.example.usermanagement.model.Role;
 import com.example.usermanagement.model.User;
 
 import com.example.usermanagement.payload.ApiResponse;
+import com.example.usermanagement.payload.ChangePasswordRequest;
 import com.example.usermanagement.payload.JwtAuthenticationResponse;
 import com.example.usermanagement.payload.LoginRequest;
 import com.example.usermanagement.payload.SignUpRequest;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,18 +50,35 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<JwtAuthenticationResponse> authenticateUser(@Valid @RequestBody LoginRequest request) {
+        Optional<User> user = userRepository.findByFullName(request.getFullName());
+        if(user.isPresent()){
+            if(!user.get().getActive()){
+                return new ResponseEntity(new ApiResponse(false, "Bad Credentials"),
+                        HttpStatus.BAD_REQUEST);
+            }
+            if(passwordEncoder.matches(request.getPassword(), user.get().getPassword())) {
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getFullName(),
+                                request.getPassword()
+                        )
+                );
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getFullName(),
-                        request.getPassword()
-                )
-        );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+                String jwt = tokenProvider.generateToken(authentication);
+                return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+            }
+            else {
+                return new ResponseEntity(new ApiResponse(false, "Bad Credentials"),
+                        HttpStatus.BAD_REQUEST);
+            }
 
-        String jwt = tokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+        }
+        else {
+            return new ResponseEntity(new ApiResponse(false, "Bad Credentials"),
+                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/signup")
@@ -73,8 +92,6 @@ public class AuthController {
             return new ResponseEntity(new ApiResponse(false, "Email Address already in use!"),
                     HttpStatus.BAD_REQUEST);
         }
-
-        // Creating user's account
         User user = User.builder()
                 .address(request.getAddress())
                 .email(request.getEmail())
@@ -83,6 +100,7 @@ public class AuthController {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
                 .workingAddress(request.getWorkingAddress())
+                .active(Boolean.TRUE)
                 .build();
 
 
@@ -96,5 +114,18 @@ public class AuthController {
         String jwt = tokenProvider.generateTokenByUser(savedUser);
 
 
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));    }
+        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+    }
+
+    @PostMapping("/forgotPassword")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ChangePasswordRequest request){
+        Optional<User> user = userRepository.findByFullName(request.getUsername());
+        if(user.isPresent()){
+            User repoUser = user.get();
+            repoUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(repoUser);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.badRequest().build();
+    }
 }

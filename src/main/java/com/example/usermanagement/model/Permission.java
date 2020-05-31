@@ -4,13 +4,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.NaturalId;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 
 @Entity
-@Table(name = "roles",uniqueConstraints = {
+@Table(name = "permissions",uniqueConstraints = {
         @UniqueConstraint(columnNames = {
                 "name"
         })
@@ -19,7 +25,7 @@ import java.util.Collection;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Role {
+public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -27,9 +33,4 @@ public class Role {
     @Column(length = 60)
     private String name;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "role_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id"))
-    private Collection<Permission> permissions;
 }
